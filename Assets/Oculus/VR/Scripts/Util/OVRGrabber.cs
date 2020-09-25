@@ -77,6 +77,8 @@ public class OVRGrabber : MonoBehaviour
     protected Quaternion m_grabbedObjectRotOff;
     protected Dictionary<OVRGrabbable, int> m_grabCandidates = new Dictionary<OVRGrabbable, int>();
     protected bool m_operatingWithoutOVRCameraRig = true;
+    Vector3[] velocityArray = new Vector3[6];  //Array of last six frames of controller velocity
+    Vector3[] angularVelocityArray = new Vector3[6]; //Array of last 6 frames of angular velocity 
 
     /// <summary>
     /// The currently grabbed object.
@@ -125,7 +127,7 @@ public class OVRGrabber : MonoBehaviour
         }
         // We're going to setup the player collision to ignore the hand collision.
         SetPlayerIgnoreCollision(gameObject, true);
-        
+
     }
 
     // Using Update instead of FixedUpdate. Doing this in FixedUpdate causes visible judder even with 
@@ -143,6 +145,7 @@ public class OVRGrabber : MonoBehaviour
         {
             OnUpdatedAnchors();
         }
+        Vector3[] temp = VelocityCounter().Item1; //Calling this once a frame, to keep the velocity and the angular velocity updated
     }
 
     // Hands follow the touch anchors by calling MovePosition each frame to reach the anchor.
@@ -355,25 +358,23 @@ public class OVRGrabber : MonoBehaviour
             localPose = localPose * offsetPose;
 
             OVRPose trackingSpace = transform.ToOVRPose() * localPose.Inverse();
-            //Vector3 linearVelocity = trackingSpace.orientation * OVRInput.GetLocalControllerVelocity(m_controller);
-            //Vector3 angularVelocity = trackingSpace.orientation * OVRInput.GetLocalControllerAngularVelocity(m_controller);
+
             Vector3 averageAngular = Vector3.zero;
             Vector3 averageLinear = Vector3.zero;
             var tupleVelocities = VelocityCounter();
             Vector3[] velocity = tupleVelocities.Item1; //This is the velocity array from the method: Velocity Counter
-            Vector3[] angularVelocity = tupleVelocities.Item2; // This is the angular velocity array from the method: Velocity Counter
-            
+            Vector3[] angularVelocity = tupleVelocities.Item2; // This is the angular velocity array from the method: Velocity Counter         
 
             for (int i = 0; i < velocity.Length; i++) //TODO will need to return this from the velocity counter method
             {
                 averageLinear += velocity[i];
             }
-            averageLinear = averageLinear / 2;
+            averageLinear = averageLinear / velocity.Length;
             for (int i = 0; i < angularVelocity.Length; i++)
             {
                 averageAngular += angularVelocity[i];
             }
-            averageAngular = averageAngular / 2;
+            averageAngular = averageAngular / velocity.Length;
 
             GrabbableRelease(averageAngular, averageLinear);
         }
@@ -390,9 +391,6 @@ public class OVRGrabber : MonoBehaviour
         {
             frameStep = 0;
         }
-
-        Vector3[] velocityArray = new Vector3[6];  //Array of last six frames of controller velocity
-        Vector3[] angularVelocityArray = new Vector3[6]; //Array of last 6 frames of angular velocity 
 
         velocityArray[frameStep] = OVRInput.GetLocalControllerVelocity(m_controller);
         angularVelocityArray[frameStep] = OVRInput.GetLocalControllerAngularVelocity(m_controller);

@@ -79,10 +79,8 @@ public class OVRGrabber : MonoBehaviour
     protected Quaternion m_grabbedObjectRotOff;
     protected Dictionary<OVRGrabbable, int> m_grabCandidates = new Dictionary<OVRGrabbable, int>();
     protected bool m_operatingWithoutOVRCameraRig = true;
-    Vector3[] velocityArray = new Vector3[5];  //Array of last six frames of controller velocity
-    Vector3[] angularVelocityArray = new Vector3[5]; //Array of last 6 frames of angular velocity
-    var velocityBuffer = new CircularBuffer<Vector3>(5);
-    var angularBuffer = new CircularBuffer<Vector3>(5);
+    CircularBuffer<Vector3> velocityBuffer = new CircularBuffer<Vector3>(5);
+    CircularBuffer<Vector3> angularBuffer = new CircularBuffer<Vector3>(5);
 
     /// <summary>
     /// The currently grabbed object.
@@ -366,32 +364,18 @@ public class OVRGrabber : MonoBehaviour
 
             Vector3 averageAngular = Vector3.zero;
             Vector3 averageLinear = Vector3.zero;
-       
-            
-            for(int i = 0; i < 6; i++)
+            foreach (Vector3 x in velocityBuffer) //Calculate the AVERAGE 3d vector for velocity
             {
-                averageLinear += velocityBuffer[i];
-                averageAngular += velocityBuffer[i];
+                averageLinear += x;
             }
-            averageAngular = averageAngular / 5;
-            averageLinear = averageLinear / 5;
-            
-            /*
-            Vector3[] velocity = tupleVelocities.Item1; //This is the velocity array from the method: velocityCounter
-            Vector3[] angularVelocity = tupleVelocities.Item2; // This is the angular velocity array from the method: velocityCounter         
+            foreach(Vector3 y in angularBuffer)
+            {
+                averageAngular += y;
+            }
+            averageLinear = averageLinear / velocityBuffer.Size;
+            averageAngular = averageAngular / angularBuffer.Size;
 
-            for (int i = 0; i < velocity.Length; i++)
-            {
-                averageLinear += velocity[i];
-            }
-            averageLinear = averageLinear / velocity.Length;
-            for (int i = 0; i < angularVelocity.Length; i++)
-            {
-                averageAngular += angularVelocity[i];
-            }
-            averageAngular = averageAngular / angularVelocity.Length; */
-
-            GrabbableRelease(averageAngular, averageLinear);
+            GrabbableRelease(averageLinear, averageAngular);
         } 
 
         // Re-enable grab volumes to allow overlap events
@@ -399,19 +383,7 @@ public class OVRGrabber : MonoBehaviour
     }
 
     public void VelocityCounter()
-    {
-        int frameStep = 0;
-        frameStep++;
-        if (frameStep >= 6)
-        {
-            frameStep = 0;
-        }
-
-        /*velocityArray[frameStep] = OVRInput.GetLocalControllerVelocity(m_controller);
-        angularVelocityArray[frameStep] = OVRInput.GetLocalControllerAngularVelocity(m_controller);
-
-        var tuple = Tuple.Create(velocityArray, angularVelocityArray);
-        return tuple;*/
+    {   
         velocityBuffer.PushFront(OVRInput.GetLocalControllerVelocity(m_controller));
         angularBuffer.PushFront(OVRInput.GetLocalControllerAngularVelocity(m_controller));
     }

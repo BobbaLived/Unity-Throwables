@@ -356,11 +356,6 @@ public class OVRGrabber : MonoBehaviour
     {
         if (m_grabbedObj != null)
         {
-            OVRPose localPose = new OVRPose { position = OVRInput.GetLocalControllerPosition(m_controller), orientation = OVRInput.GetLocalControllerRotation(m_controller) };
-            OVRPose offsetPose = new OVRPose { position = m_anchorOffsetPosition, orientation = m_anchorOffsetRotation };
-            localPose = localPose * offsetPose;
-
-            OVRPose trackingSpace = transform.ToOVRPose() * localPose.Inverse();
 
             Vector3 averageAngular = Vector3.zero;
             Vector3 averageLinear = Vector3.zero;
@@ -383,9 +378,17 @@ public class OVRGrabber : MonoBehaviour
     }
 
     public void VelocityCounter()
-    {   
-        velocityBuffer.PushFront(OVRInput.GetLocalControllerVelocity(m_controller));
-        angularBuffer.PushFront(OVRInput.GetLocalControllerAngularVelocity(m_controller));
+    {
+        OVRPose localPose = new OVRPose { position = OVRInput.GetLocalControllerPosition(m_controller), orientation = OVRInput.GetLocalControllerRotation(m_controller) }; //What is controller pos/rot
+        OVRPose offsetPose = new OVRPose { position = m_anchorOffsetPosition, orientation = m_anchorOffsetRotation }; //What is original pos/rot
+        localPose = localPose * offsetPose; //Multiply both vectors & quaternion's
+        OVRPose trackingSpace = transform.ToOVRPose() * localPose.Inverse();
+        //All that these lines do is take the velocity of the hand (which happens to the velocity of our ball) and 
+        //Removes the local velocity and instead puts it into global space.  Works like a charm Mr. Hidinger!
+
+        velocityBuffer.PushFront(trackingSpace.orientation * OVRInput.GetLocalControllerVelocity(m_controller));
+        angularBuffer.PushFront(trackingSpace.orientation * OVRInput.GetLocalControllerAngularVelocity(m_controller));  
+        //Take the velocity from the controller and orient it correctly for the ball being thrown
     }
   
 

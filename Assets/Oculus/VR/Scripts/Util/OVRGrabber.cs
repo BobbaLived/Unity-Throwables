@@ -16,6 +16,9 @@ permissions and limitations under the License.
 
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using CircularBuffer;
+
 
 /// <summary>
 /// Allows grabbing and throwing of objects with the OVRGrabbable component on them.
@@ -76,6 +79,8 @@ public class OVRGrabber : MonoBehaviour
     protected Quaternion m_grabbedObjectRotOff;
     protected Dictionary<OVRGrabbable, int> m_grabCandidates = new Dictionary<OVRGrabbable, int>();
     protected bool m_operatingWithoutOVRCameraRig = true;
+    CircularBuffer<Vector3> velocityBuffer = new CircularBuffer<Vector3>(5);
+    CircularBuffer<Vector3> angularBuffer = new CircularBuffer<Vector3>(5);
 
     /// <summary>
     /// The currently grabbed object.
@@ -124,7 +129,7 @@ public class OVRGrabber : MonoBehaviour
         }
         // We're going to setup the player collision to ignore the hand collision.
         SetPlayerIgnoreCollision(gameObject, true);
-        controllerCenterOfMass = GetComponent<Rigidbody>().centerOfMass;
+
     }
 
     // Using Update instead of FixedUpdate. Doing this in FixedUpdate causes visible judder even with 
@@ -142,6 +147,8 @@ public class OVRGrabber : MonoBehaviour
         {
             OnUpdatedAnchors();
         }
+        VelocityCounter(); //Calling this once per frame to keep the array's updated
+
     }
 
     // Hands follow the touch anchors by calling MovePosition each frame to reach the anchor.
@@ -349,24 +356,22 @@ public class OVRGrabber : MonoBehaviour
     {
         if (m_grabbedObj != null)
         {
-            OVRPose localPose = new OVRPose { position = OVRInput.GetLocalControllerPosition(m_controller), orientation = OVRInput.GetLocalControllerRotation(m_controller) };
-            OVRPose offsetPose = new OVRPose { position = m_anchorOffsetPosition, orientation = m_anchorOffsetRotation };
-            localPose = localPose * offsetPose;
 
-            OVRPose trackingSpace = transform.ToOVRPose() * localPose.Inverse();
-            //Vector3 linearVelocity = trackingSpace.orientation * OVRInput.GetLocalControllerVelocity(m_controller);
-            //Vector3 angularVelocity = trackingSpace.orientation * OVRInput.GetLocalControllerAngularVelocity(m_controller);
             Vector3 averageAngular = Vector3.zero;
             Vector3 averageLinear = Vector3.zero;
-
-            for (int i = 0; i < velocityArray.length(); i++) //TODO will need to return this from the velocity counter method
+            foreach (Vector3 x in velocityBuffer) //Calculate the AVERAGE 3d vector for velocity
             {
-                averageLinear += velocityArray[i];
-                averageLinear = averageLinear / 2;
+                averageLinear += x;
             }
+            foreach(Vector3 y in angularBuffer)
+            {
+                averageAngular += y;
+            }
+            averageLinear = averageLinear / velocityBuffer.Size;
+            averageAngular = averageAngular / angularBuffer.Size;
 
-            GrabbableRelease(averageAngular, averageLinear);
-        }
+            GrabbableRelease(averageLinear, averageAngular);
+        } 
 
         // Re-enable grab volumes to allow overlap events
         GrabVolumeEnable(true);
@@ -374,22 +379,16 @@ public class OVRGrabber : MonoBehaviour
 
     public void VelocityCounter()
     {
-        int frameStep = 0;
-        frameStep++;
-        if (frameStep >= 6)
-        {
-            frameStep = 0;
-        }
+        OVRPose localPose = new OVRPose { position = OVRInput.GetLocalControllerPosition(m_controller), orientation = OVRInput.GetLocalControllerRotation(m_controller) }; //What is controller pos/rot
+        OVRPose offsetPose = new OVRPose { position = m_anchorOffsetPosition, orientation = m_anchorOffsetRotation }; //What is original pos/rot
+        localPose = localPose * offsetPose; //Multiply both vectors & quaternion's
+        OVRPose trackingSpace = transform.ToOVRPose() * localPose.Inverse();
+        //All that these lines do is take the velocity of the hand (which happens to the velocity of our ball) and 
+        //Removes the local velocity and instead puts it into global space.  Works like a charm Mr. Hidinger!
 
-        Vector3[] velocityArray = new Vector3[6];  //Array of last six frames of controller velocity
-        Vector3[] angularVelocityArray = new Vector3[6]; //Array of last 6 frames of angular velocity 
-
-        Rigidbody rb = gameObject.GetComponent<Rigidbody>();
-
-        velocityArray[frameStep] = OVRInput.GetLocalControllerVelocity(m_controller);
-        angularVelocityArray[frameStep] = OVRInput.GetLocalControllerAngularVelocity(m_controller);
-
-        //upon GrabEND, calculate the average velocity from the array
+        velocityBuffer.PushFront(trackingSpace.orientation * OVRInput.GetLocalControllerVelocity(m_controller));
+        angularBuffer.PushFront(trackingSpace.orientation * OVRInput.GetLocalControllerAngularVelocity(m_controller));  
+        //Take the velocity from the controller and orient it correctly for the ball being thrown
     }
   
 

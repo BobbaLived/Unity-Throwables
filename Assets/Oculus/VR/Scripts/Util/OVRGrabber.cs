@@ -81,6 +81,7 @@ public class OVRGrabber : MonoBehaviour
     protected bool m_operatingWithoutOVRCameraRig = true;
     CircularBuffer<Vector3> velocityBuffer = new CircularBuffer<Vector3>(5);
     CircularBuffer<Vector3> angularBuffer = new CircularBuffer<Vector3>(5);
+    Vector3 controllerCenterOfMass;
 
     /// <summary>
     /// The currently grabbed object.
@@ -106,7 +107,7 @@ public class OVRGrabber : MonoBehaviour
     {
         m_anchorOffsetPosition = transform.localPosition;
         m_anchorOffsetRotation = transform.localRotation;
-
+        controllerCenterOfMass = GetComponent<Rigidbody>().centerOfMass;
         if (!m_moveHandPosition)
         {
             // If we are being used with an OVRCameraRig, let it drive input updates, which may come from Update or FixedUpdate.
@@ -369,8 +370,10 @@ public class OVRGrabber : MonoBehaviour
             }
             averageLinear = averageLinear / velocityBuffer.Size;
             averageAngular = averageAngular / angularBuffer.Size;
+            Vector3 controllerVelocityCross = Vector3.Cross(averageLinear, m_grabbedObjectPosOff - controllerCenterOfMass);
 
-            GrabbableRelease(averageLinear, averageAngular);
+            GrabbableRelease(averageLinear, averageAngular, controllerCenterOfMass); //By including this center of mass, we take into account
+            //The controller's center of mass, not the object.  This will allow for better throwing!
         } 
 
         // Re-enable grab volumes to allow overlap events
@@ -392,9 +395,9 @@ public class OVRGrabber : MonoBehaviour
     }
   
 
-    private void GrabbableRelease(Vector3 linearVelocity, Vector3 angularVelocity)
+    private void GrabbableRelease(Vector3 linearVelocity, Vector3 angularVelocity, Vector3 cross)
     {
-        m_grabbedObj.GrabEnd(linearVelocity, angularVelocity);
+        m_grabbedObj.GrabEnd(linearVelocity, angularVelocity, cross); //See GrabEnd function
         if(m_parentHeldObject) m_grabbedObj.transform.parent = null;
         m_grabbedObj = null;
     }
@@ -423,7 +426,7 @@ public class OVRGrabber : MonoBehaviour
     {
         if (m_grabbedObj == grabbable)
         {
-            GrabbableRelease(Vector3.zero, Vector3.zero);
+            GrabbableRelease(Vector3.zero, Vector3.zero, Vector3.zero);
         }
     }
 

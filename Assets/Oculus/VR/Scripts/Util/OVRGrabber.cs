@@ -149,7 +149,7 @@ public class OVRGrabber : MonoBehaviour
     // Hands follow the touch anchors by calling MovePosition each frame to reach the anchor.
     // This is done instead of parenting to achieve workable physics. If you don't require physics on
     // your hands or held objects, you may wish to switch to parenting.
-    void OnUpdatedAnchors()
+    public void OnUpdatedAnchors() //Made public so accessable to OVRGrabberJacob
     {
         Vector3 destPos = m_parentTransform.TransformPoint(m_anchorOffsetPosition);
         Quaternion destRot = m_parentTransform.rotation * m_anchorOffsetRotation;

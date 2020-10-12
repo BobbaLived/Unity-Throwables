@@ -5,7 +5,14 @@ using CircularBuffer;
 
 public class OVRGrabberJacob : OVRGrabber
 {
-    
+    public override void Update()
+    {
+        VelocityCounter();
+        if (m_operatingWithoutOVRCameraRig)
+        {
+            OnUpdatedAnchors();
+        }
+    }
 
     CircularBuffer<Vector3> velocityBuffer = new CircularBuffer<Vector3>(5);
     CircularBuffer<Vector3> angularBuffer = new CircularBuffer<Vector3>(5);

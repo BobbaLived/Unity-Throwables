@@ -366,9 +366,9 @@ public class OVRGrabber : MonoBehaviour
         GrabVolumeEnable(true);
     }
 
-    protected void GrabbableRelease(Vector3 linearVelocity, Vector3 angularVelocity, Vector3 controllerCenterOfMass) //Had to add a parameter
+    protected void GrabbableRelease(Vector3 linearVelocity, Vector3 angularVelocity, Vector3 crossP) //Had to add a parameter
     {
-        m_grabbedObj.GrabEnd(linearVelocity, angularVelocity, controllerCenterOfMass);
+        m_grabbedObj.GrabEnd(linearVelocity, angularVelocity, crossP); //Added param
         if(m_parentHeldObject) m_grabbedObj.transform.parent = null;
         m_grabbedObj = null;
     }

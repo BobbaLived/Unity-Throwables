@@ -14,8 +14,8 @@ public class OVRGrabberJacob : OVRGrabber
         }
     }
 
-    CircularBuffer<Vector3> velocityBuffer = new CircularBuffer<Vector3>(5);
-    CircularBuffer<Vector3> angularBuffer = new CircularBuffer<Vector3>(5);
+    CircularBuffer<Vector3> velocityBuffer = new CircularBuffer<Vector3>(3);
+    CircularBuffer<Vector3> angularBuffer = new CircularBuffer<Vector3>(3);
     Vector3 controllerCenterOfMassLocal;
 
     public override void GrabEnd()
@@ -25,10 +25,13 @@ public class OVRGrabberJacob : OVRGrabber
             controllerCenterOfMassLocal = GetComponent<Rigidbody>().centerOfMass; //Rename so parent and child class do not have same pub. var.
             Vector3 averageAngular = Vector3.zero;
             Vector3 averageLinear = Vector3.zero;
+            Debug.Log("Velocities: ");
             foreach (Vector3 x in velocityBuffer) //Calculate the AVERAGE 3d vector for velocity
             {
                 averageLinear += x;
+
             }
+            Debug.Log("\nAngular velocities: ");
             foreach (Vector3 y in angularBuffer)
             {
                 averageAngular += y;
@@ -39,7 +42,7 @@ public class OVRGrabberJacob : OVRGrabber
             /*TRYING OUT CONTROLLERVELOCITYCROSS IN THIRD ARG OF GRAB RELEASE -> USED TO BE CONTROLLERCENTER OFMASS
              * 
              */
-
+            Debug.Log("\nAverage linear: " + averageLinear.magnitude + ".  Average angular:" + averageAngular.magnitude);
             GrabbableRelease(averageLinear, averageAngular, controllerVelocityCross); //By including this center of mass, we take into account
             //The controller's center of mass, not the object.
         }
@@ -56,9 +59,10 @@ public class OVRGrabberJacob : OVRGrabber
         OVRPose trackingSpace = transform.ToOVRPose() * localPose.Inverse();
         //All that these lines do is take the velocity of the hand (which happens to be the velocity of our ball) and 
         //Removes the local velocity and instead puts it into global space.
-        Vector3 oculusFactor = new Vector3(2.5f, 2.5f, 2.5f);
+        Vector3 oculusFactor = new Vector3(2.5f, 2.5f, 1.5f);
 
-        velocityBuffer.PushFront(trackingSpace.orientation * Vector3.Scale(OVRInput.GetLocalControllerVelocity(m_controller), oculusFactor)); //multiply everything by 2.5x
+        //velocityBuffer.PushFront(trackingSpace.orientation * Vector3.Scale(OVRInput.GetLocalControllerVelocity(m_controller), oculusFactor)); //multiply everything by 2.5x
+        velocityBuffer.PushFront(trackingSpace.orientation * OVRInput.GetLocalControllerVelocity(m_controller));
         angularBuffer.PushFront(trackingSpace.orientation * OVRInput.GetLocalControllerAngularVelocity(m_controller));
         //Take the velocity from the controller and orient it correctly for the ball being thrown
     }

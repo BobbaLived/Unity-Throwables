@@ -358,17 +358,18 @@ public class OVRGrabber : MonoBehaviour
 			OVRPose trackingSpace = transform.ToOVRPose() * localPose.Inverse();
 			Vector3 linearVelocity = trackingSpace.orientation * OVRInput.GetLocalControllerVelocity(m_controller);
 			Vector3 angularVelocity = trackingSpace.orientation * OVRInput.GetLocalControllerAngularVelocity(m_controller);
+            Vector3 acceleration = Vector3.zero;
 
-            GrabbableRelease(linearVelocity, angularVelocity, controllerCenterOfMass);
+            GrabbableRelease(linearVelocity, angularVelocity, acceleration);
         }
 
         // Re-enable grab volumes to allow overlap events
         GrabVolumeEnable(true);
     }
 
-    protected void GrabbableRelease(Vector3 linearVelocity, Vector3 angularVelocity, Vector3 crossP) //Had to add a parameter
+    protected void GrabbableRelease(Vector3 linearVelocity, Vector3 angularVelocity, Vector3  acceleration) //Had to add a parameter
     {
-        m_grabbedObj.GrabEnd(linearVelocity, angularVelocity, crossP); //Added param
+        m_grabbedObj.GrabEnd(linearVelocity, angularVelocity, acceleration); //Added param
         if(m_parentHeldObject) m_grabbedObj.transform.parent = null;
         m_grabbedObj = null;
     }

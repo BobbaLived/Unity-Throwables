@@ -122,7 +122,7 @@ public class OVRGrabbable : MonoBehaviour
 	/// <summary>
 	/// Notifies the object that it has been released.
 	/// </summary>
-	virtual public void GrabEnd(Vector3 linearVelocity, Vector3 angularVelocity, Vector3 cross)
+	virtual public void GrabEnd(Vector3 linearVelocity, Vector3 angularVelocity, Vector3 acceleration)
     {
         Rigidbody rb = gameObject.GetComponent<Rigidbody>();
         rb.isKinematic = m_grabbedKinematic;

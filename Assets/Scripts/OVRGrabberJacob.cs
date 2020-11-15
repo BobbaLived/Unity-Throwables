@@ -14,9 +14,9 @@ public class OVRGrabberJacob : OVRGrabber
         }
     }
 
-    CircularBuffer<Vector3> velocityBuffer = new CircularBuffer<Vector3>(3);
+    CircularBuffer<Vector3> velocityBuffer = new CircularBuffer<Vector3>(5);
     CircularBuffer<Vector3> angularBuffer = new CircularBuffer<Vector3>(3);
-    CircularBuffer<Vector3> accelerationBuffer = new CircularBuffer<Vector3>(5);
+    CircularBuffer<Vector3> accelerationBuffer = new CircularBuffer<Vector3>(15);
 
     
 

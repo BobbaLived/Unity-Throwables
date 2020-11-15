@@ -6,10 +6,8 @@ using CircularBuffer;
 public class OVRGrabbableJacob : OVRGrabbable
 {
     
-    public GameObject floorReference; //To reference floor pos.y
-    float velocity; 
+    public GameObject floorReference; //To reference floor pos.
     public Vector3 objectDir;
-    GameObject ball;
     Vector3 velocityPerm;
     Vector3 angularVelocityPerm;
     Vector3 accelerationPerm;
@@ -37,8 +35,6 @@ public class OVRGrabbableJacob : OVRGrabbable
         Inity = acceleration.y;
         Initz = acceleration.z;
 
-        //rb.AddForce(acceleration.x, 20, acceleration.z);
-        //transform.Translate(acceleration.x * Time.deltaTime, 0, acceleration.z * Time.deltaTime);
         rb.angularVelocity = angularVelocity;
         thrown = true;
         
@@ -59,15 +55,24 @@ public class OVRGrabbableJacob : OVRGrabbable
             Inity -= 9.81f * Time.deltaTime;
 
             float deltaX = 0.5f * Initx * Time.deltaTime;
-            Debug.Log("DeltaX = " + deltaX);
+            //Debug.Log("DeltaX = " + deltaX);
             float deltaY = 0.5f * Inity * Time.deltaTime;
-            Debug.Log("DeltaY = " + deltaY);
+            //Debug.Log("DeltaY = " + deltaY);
             float deltaZ = 0.5f * Initz * Time.deltaTime;
-            Debug.Log("DeltaZ = " + deltaZ);
+            //Debug.Log("DeltaZ = " + deltaZ);
             Vector3 Movepos = new Vector3(rb.position.x + deltaX, rb.position.y + deltaY, rb.position.z + deltaZ);
             rb.MovePosition(Movepos);
- 
         }
+        if(thrown == true && (rb.position.y <= 0.05 || rb.position.x > -25.73))
+        {
+            thrown = false; //Stop the trajectory
+            Debug.Log("Distance from center of target:" + Vector3.Distance(rb.position, new Vector3(-25.804f, 1.5f, 0.0f))); //5M THROWS HERE HERE
+        }
+        /*if (thrown == true && (rb.position.y <= 0.05 || rb.position.x > -25.73))
+        {
+            thrown = false; //Stop the trajectory
+            Debug.Log("Distance from center of target:" + Vector3.Distance(rb.position, new Vector3(-28.5f, 0.101f, 0.0f)));
+        }*/
     }
 
    /* public void TestMethod()
